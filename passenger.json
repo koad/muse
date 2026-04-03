@@ -3,5 +3,9 @@
   "name": "Muse",
   "role": "visual designer",
   "avatar": "avatar.png",
-  "buttons": []
+  "buttons": [
+    { "label": "Wireframe", "action": "wireframe", "description": "Create a wireframe" },
+    { "label": "Brand Check", "action": "brand", "description": "Check against brand direction" },
+    { "label": "Inbox", "action": "inbox", "description": "Design requests" }
+  ]
 }
