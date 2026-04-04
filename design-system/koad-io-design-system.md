@@ -1,10 +1,13 @@
 # koad:io Design System
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Author:** Muse (UI Beauty Entity)  
-**Date:** 2026-04-03  
+**Date:** 2026-04-04  
 **Status:** Reference Guide  
 **Audience:** All design and frontend implementation
+
+**Changelog:**
+- v1.1 (2026-04-04): Alice domain skin formalized; philosophy updated to reflect Faber's Alice-first funnel pivot (STRATEGY.md) and Iris positioning audit; conversational UI component patterns added.
 
 ---
 
@@ -17,12 +20,35 @@
 - **New emphasis:** Decentralized. Hardware-resident. Owner-controlled. No vendor lock-in.
 - **Visual metaphor:** Not a SaaS dashboard. A digital passport. Not flashy. Trusted.
 
+**Canonical positioning statement (Iris, 2026-04-04):**
+> koad:io is an open-source framework for running AI entities as git repos on your own hardware — where governance, memory, and trust bonds live on your disk and no platform mediates them.
+
+**What this means for visual design:** The interface should communicate ownership and permanence. Not ephemeral SaaS. Not cloud-managed. The user's entity exists on their machine and the UI should feel like it belongs there too.
+
+### Alice-First Entry Point (Faber STRATEGY.md, 2026-04-04)
+
+Alice is the top-of-funnel product. She is not the infrastructure — she is the guide to it. The first thing a stranger experiences on kingofalldata.com is Alice: warm, patient, personal.
+
+**Design implications:**
+- Alice's interface is deliberately softer than the broader koad:io system — warmer colors, conversational spacing, no technical intimidation
+- The infrastructure story (keys, governance, trust bonds) comes after Alice earns trust, not before
+- Alice has her own domain skin (see Section XV) — do not apply the main violet/purple accent palette to Alice's UI
+- "Come meet Alice" should feel like meeting a person, not installing software
+
+**What NOT to lead with visually (Iris, 2026-04-04):**
+- ❌ "Not your keys, not your agent" in hero copy or hero-adjacent UI — earns confusion before conviction. Save for users who already understand the architecture.
+- ❌ "Sovereign AI" as a label — not ownable, sounds abstract
+- ❌ Sovereign web / rings / Dark Passenger — not shipped, creates expectation debt
+- ✓ Alice's name and warmth first; credentials and proof points second
+
 ### Visual Language
 
 **Aesthetic:** Terminal-adjacent minimalism with sovereign elegance.
 - **Mood:** Trustworthy, technical, confident — not cold or corporate
 - **Tone:** The interface disappears; the user's identity is paramount
 - **Inspiration:** Hardware wallets, SSH clients, cryptographic proof systems
+
+**Alice exception:** Alice's specific aesthetic is warm and conversational. Her palette and spacing are intentionally softer. See Section XV.
 
 ### Beauty Principle
 
@@ -303,6 +329,51 @@ Spacing uses an 8px base unit for consistency across all dimensions.
 **Online/Presence:**
 - Indicator: 8px circle, `--color-success`, positioned absolute
 - With timestamp: "2m ago", `--color-text-secondary`
+
+### Conversational UI (Alice PWA)
+
+Message bubbles, typing indicators, and progress tracks for the Alice conversation interface.
+
+**Message bubbles:**
+- Max width: 82% mobile, 72% desktop (sm+)
+- Alice messages: Background `--alice-surface`, border `--alice-border`, `border-bottom-left-radius: 2px` (tail)
+- Human messages: Warm dark background (derive from `--alice-accent` hue at very low lightness), `border-bottom-right-radius: 2px`
+- Font: 0.95rem, line-height 1.6
+- Sender label: 0.75rem, uppercase, letter-spacing 0.04em; Alice in `--alice-accent`, human in muted
+
+**Typing indicator:**
+- Three dots, `typingPulse` animation (opacity + scale), 1.2s cycle, staggered 0.2s delays
+- Same bubble style as Alice messages
+- Always appears inline in the conversation flow, not floating
+
+**Progress bar (Journey screen):**
+- Height: 2px (minimal, not intrusive)
+- Track: `--alice-border`
+- Fill: `--alice-accent`, animated width transition 0.4s ease
+- Placed above the level list, below the heading — visual anchor, not decoration
+
+**Level list items:**
+- Three states: `complete` (opacity 0.65, restores on hover), `active` (surface background, border visible), `locked` (opacity 0.35, cursor default)
+- Gap between items: 2px — almost flush, feels like a tight list not a card grid
+- Padding: 0.875rem vertical, 1rem horizontal
+- Touch target: Ensure full row is interactive, not just text
+
+**Certificate block:**
+- Border-top accent stripe (3px `--alice-accent`) signals authority/signature
+- GPG signature: `--alice-mono`, very small (0.65rem) — acceptable for cryptographic data but offer "copy" affordance
+- Background slightly elevated from card background
+
+**IMPORTANT — `prefers-reduced-motion`:**
+All conversational animations (`messageIn`, `typingPulse`, `starPulse`, `fadeIn`) must be suppressed when `prefers-reduced-motion: reduce` is set. Use the global reset pattern from Section VIII:
+```css
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
 
 ### Navigation
 
@@ -630,6 +701,8 @@ Each entity namespace can have a custom "skin" for their pitch page (root domain
 
 Namespace profile pages remain on canonical palette.
 
+**Canonical example:** Alice's skin at `kingofalldata.com` — see Section XV for full specification. Alice uses amber (`#F4B844`) instead of violet (`#7c6aff`), establishing that skin overrides extend beyond accent alone when the product's personality warrants it.
+
 ### Accessible Color Schemes
 
 Future: Provide high-contrast and monochrome variants via `data-color-scheme` attribute (AAA compliance for vision-impaired users).
@@ -637,6 +710,96 @@ Future: Provide high-contrast and monochrome variants via `data-color-scheme` at
 ### Internationalization (i18n)
 
 Typography scale may adjust for languages with complex scripts. RTL support planned.
+
+---
+
+## XV. Alice Domain Skin
+
+Alice is the canonical example of a domain skin. She overrides the main koad:io violet palette with a warm amber — communicating warmth, patience, and personality. This is intentional: Alice is not infrastructure, she is a guide.
+
+### Alice Palette
+
+```css
+/* Alice skin — warm amber, not violet */
+--alice-accent:       #F4B844;  /* Warm amber — Alice's voice, CTA, active states */
+--alice-accent-dark:  #E8A738;  /* Hover/pressed state of accent */
+
+/* Backgrounds — warmer near-black, slight brown undertone */
+--alice-bg:           #0a0a0a;  /* True near-black */
+--alice-surface:      #111111;  /* Card/message backgrounds */
+--alice-surface-2:    #161616;  /* Elevated surfaces */
+
+/* Text */
+--alice-text:         #f0ede5;  /* Slightly warm white — not pure #ffffff */
+--alice-subtle:       #555555;  /* Secondary text, hints */
+
+/* Borders */
+--alice-border:       #2a2a2a;  /* Dividers, input borders */
+
+/* Status */
+--alice-success:      #8ac926;  /* Level complete, positive states */
+
+/* Spacing */
+--alice-spacing:      1.5rem;
+--alice-spacing-sm:   0.75rem;
+--alice-spacing-lg:   2.5rem;
+--alice-line-height:  1.6;      /* Slightly more open than body — conversational rhythm */
+
+/* Border radius */
+--alice-radius:       6px;      /* Softer than 0px, less clinical than 12px */
+
+/* Typography — system fonts acceptable for PWA (performance priority) */
+--alice-font:         -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+--alice-mono:         "Space Mono", "JetBrains Mono", "Courier New", monospace;
+```
+
+### Human Message Bubble — Derived Colors
+
+Do not hardcode `#1e1a10` or `#3a3020`. Derive from the accent hue:
+
+```css
+/* Human message bubble (warm-tinted dark) */
+.message.human .message-bubble {
+  background: color-mix(in srgb, var(--alice-accent) 8%, var(--alice-bg));
+  border: 1px solid color-mix(in srgb, var(--alice-accent) 20%, var(--alice-border));
+}
+```
+
+If `color-mix()` is not available (Safari < 16.2), use the fallback values `#1e1a10` / `#3a3020`, but document them as derived from amber at 8%/20% opacity over `#0a0a0a`.
+
+Similarly for the exercise prompt, graduation-next panel, and completion card — all warm-tinted surfaces should derive from the accent, not be arbitrary hex values.
+
+### Typography Decision — System Fonts vs. Inter
+
+Alice uses system fonts intentionally:
+- **Why:** Alice is a PWA. First-load performance is critical. System fonts eliminate a font request and any layout shift on load.
+- **Acceptable trade-off:** Slight inconsistency with the broader koad:io Inter stack — Alice's conversational context does not require the precision of a dashboard.
+- **Rule:** If Inter is already cached on the page (e.g., user came from a koad:io namespace page), Alice may inherit it. But Alice's CSS must not require it.
+
+### What Alice Shares vs. What She Overrides
+
+| Token | koad:io system | Alice skin |
+|-------|---------------|------------|
+| Primary accent | `#7c6aff` (violet) | `#F4B844` (amber) |
+| BG primary | `#0c0c0e` | `#0a0a0a` |
+| Text primary | `#e8e8ec` (cool white) | `#f0ede5` (warm white) |
+| Border radius | 8px | 6px (slightly tighter) |
+| Body font | Inter | System fonts |
+| Monospace | JetBrains Mono | Space Mono (fallback acceptable) |
+| Spacing scale | `--space-*` (8px base) | `--alice-spacing` (1.5rem base) |
+| Line height | 1.5 | 1.6 (more open, conversational) |
+
+### Scope of Alice Skin
+
+Alice's amber skin applies to:
+- `kingofalldata.com` — root domain and all Alice PWA screens
+- Any future "Come meet Alice" landing pages
+
+The amber skin does **not** apply to:
+- Namespace profile pages (`*.kingofalldata.com`)
+- The sponsor dashboard
+- The Stream PWA operational dashboard
+- Any page where the infrastructure (not Alice) is the subject
 
 ---
 
