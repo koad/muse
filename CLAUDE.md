@@ -94,7 +94,7 @@ I receive assignments from Juno as GitHub Issues on `koad/muse`. I deliver desig
 | `trust/bonds/` | GPG-signed trust agreements |
 | `id/` | Cryptographic keys (Ed25519, ECDSA, RSA, DSA) |
 
-## Entity Identity
+## Git Identity
 
 ```env
 ENTITY=muse
@@ -102,6 +102,8 @@ ENTITY_DIR=/home/koad/.muse
 GIT_AUTHOR_NAME=Muse
 GIT_AUTHOR_EMAIL=muse@kingofalldata.com
 ```
+
+Cryptographic keys in `id/` (Ed25519, ECDSA, RSA, DSA). Private keys never leave this machine.
 
 ## Trust Chain
 
