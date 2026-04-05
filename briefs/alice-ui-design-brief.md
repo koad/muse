@@ -1,10 +1,26 @@
 # Alice UI Design Brief
 
-**Status:** Design Direction  
-**Date:** 2026-04-03  
+**Status:** Updated — Chiron Decisions Incorporated  
+**Date:** 2026-04-05 (original: 2026-04-03)  
 **Audience:** Vulcan (PWA integration), Juno (approval)  
 **Entity:** Muse  
-**References:** PROJECT-08: Alice, koad:io Design System
+**References:** PROJECT-08: Alice, koad:io Design System, koad/vulcan#36, chiron/curricula/alice-onboarding/DECISIONS.md
+
+---
+
+## Changelog
+
+### 2026-04-05 Update
+
+Three Chiron decisions (DECISIONS.md, 2026-04-05) have been settled and are now incorporated into this brief:
+
+1. **Learner ID: UUIDv4, Alice-generated locally.** The learner is identified by a locally-generated UUID. Alice asks for a display name on first interaction ("What would you like me to call you?") and stores it alongside the UUID. The display name is what appears in Alice's conversation and on the certificate. The UUID is never surfaced to the learner — it is Alice's internal key.
+
+2. **Gating: Strict.** A locked level cannot be loaded or previewed. The learner only sees the current level and the fact that a next level exists. However, **accelerated assessment** is the legitimate unlock path: if a learner claims prior knowledge, Alice conducts the exit-criteria assessment directly. If they pass, Alice writes the completion record and the next level becomes available normally. Vulcan does not need to model this case — it always resolves to a standard completion write.
+
+3. **Completion writes: Alice writes to disk; Vulcan reads.** Vulcan does not write completion records. Alice writes markdown files to `~/.alice/learners/{uuid}/curricula/alice-onboarding/level-{N}-complete.md`. Vulcan reads them to determine gating state.
+
+**UI impacts:** Screen 1 gains a name-prompt moment. Screen 2 gains an "I already know this" affordance on locked levels. The data model section is updated throughout.
 
 ---
 
@@ -69,9 +85,11 @@ The interface should honor the philosophical journey the human is on — from cu
 
 ## Key Screens
 
-### Screen 1: Alice Introduction
+### Screen 1: Alice Introduction + Name Prompt
 
-**Context:** Human lands in Alice's space for the first time. They meet her voice. No friction — just invitation.
+**Context:** Human lands in Alice's space for the first time. They meet her voice. No friction — just invitation. Then Alice immediately asks their name before anything else happens. This is how she establishes their learner identity locally.
+
+**1a. First greeting:**
 
 ```
 ┌──────────────────────────────────────┐
@@ -107,12 +125,40 @@ The interface should honor the philosophical journey the human is on — from cu
 └──────────────────────────────────────┘
 ```
 
+**1b. Name prompt (immediately follows "Let's begin"):**
+
+```
+┌──────────────────────────────────────┐
+│                                      │
+│  Alice                               │
+│  ────────────────────────────────── │
+│                                      │
+│  "Before we begin — what would       │
+│   you like me to call you?"          │
+│                                      │
+│  ┌──────────────────────────────┐    │
+│  │  Your name or handle...      │    │ ← Text input, focused
+│  └──────────────────────────────┘    │
+│                                      │
+│                    ┌──────────────┐  │
+│                    │ That's me ✦  │  │ ← Gold confirm button
+│                    └──────────────┘  │
+│                                      │
+│  You can use any name or handle.     │ ← Reassuring note, 13px muted
+│  This stays on your device.          │
+│                                      │
+└──────────────────────────────────────┘
+```
+
 **Notes:**
 - Simple, warm greeting. No logo spam, no sales language.
 - Amber accent bar signals "this is Alice's space."
 - Primary action is warm and inviting, not corporate.
 - Secondary option respects that they might need context first.
-- Mobile: Full-height, single column, thumb-reachable button.
+- **Name prompt is immediate, low-stakes, reassuring.** "This stays on your device" is true and important — the UUID and display_name live in Alice's local filesystem (`~/.alice/learners/{uuid}/identity.md`), not in any database.
+- **What happens behind the scenes:** on confirming the name, Alice generates a UUIDv4 locally and writes `identity.md`. The UUID is never shown to the learner in normal flow. From this point on, Alice addresses the learner by their display_name.
+- **Returning learner edge case:** If Alice cannot determine who the learner is (e.g. new device), she may ask "Have we spoken before? Do you have a learner ID?" — but this is recovery UX, not the normal path. Design for this edge case is deferred; the happy path is all that ships in Phase 1.
+- Mobile: Full-height, single column, thumb-reachable button and input.
 
 ---
 
@@ -120,12 +166,14 @@ The interface should honor the philosophical journey the human is on — from cu
 
 **Context:** Human has completed or is working through levels. They see their path.
 
+**2a. The journey list:**
+
 ```
 ┌──────────────────────────────────────┐
 │ ← Back                         Alice  │
 ├──────────────────────────────────────┤
 │                                      │
-│  Your Path to Mastery               │
+│  Your Path, [Name]                  │ ← Uses display_name (e.g. "Your Path, Jordan")
 │  ═══════════════════════════════════│
 │                                      │
 │   ✦ Level 1: What is sovereignty?   │ ← Complete (gold ✦, muted text)
@@ -135,9 +183,10 @@ The interface should honor the philosophical journey the human is on — from cu
 │     ✓ Completed in 12 min           │
 │                                      │
 │   ◆ Level 3: Keys & identity        │ ← Current (amber ◆, bright)
-│     In progress — you're reading... │    Conversation below
+│     In progress — you're reading... │
 │                                      │
-│   ○ Level 4: The daemon             │ ← Locked (hollow ○, grayed)
+│   ○ Level 4: The daemon             │ ← Locked
+│     Already know this?              │ ← Subtle affordance (see 2b below)
 │   ○ Level 5: Commands & skills      │
 │   ○ Level 6: Trust bonds            │
 │   ...                               │
@@ -170,12 +219,38 @@ The interface should honor the philosophical journey the human is on — from cu
 └──────────────────────────────────────┘
 ```
 
+**2b. Locked level with accelerated assessment affordance (tap to expand):**
+
+When a learner taps a locked level, a small inline affordance appears — not a bypass, just an invitation to claim prior knowledge and be assessed:
+
+```
+┌──────────────────────────────────────┐
+│   ○ Level 4: The daemon             │ ← Locked
+│   ───────────────────────────────── │
+│                                      │
+│   This level unlocks after you      │ ← Inline expansion
+│   complete Level 3.                 │
+│                                      │
+│   Already know this topic?          │
+│   Tell Alice and she'll assess you. │
+│   Pass and this level is unlocked.  │
+│                                      │
+│   [ Tell Alice I know this ]        │ ← Amber link, not a primary button
+│                                      │
+└──────────────────────────────────────┘
+```
+
+Tapping "Tell Alice I know this" drops the learner into the current lesson conversation with a pre-seeded message ("I already understand [Level N topic] — can you assess me?"). Alice conducts the assessment in the normal conversation flow. If the learner passes, Alice writes the completion record to disk and the level status updates to complete in the next render.
+
 **Notes:**
 - Journey visualization: completed levels appear faded with checkmarks, current level is bright with amber accent, locked levels are hollow.
+- **Display name personalizes the journey header** — "Your Path, Jordan" feels owned. This uses the `display_name` from Alice's identity record for this learner.
 - Spatial layout — human can see where they are in the journey at a glance.
 - Completion times create a sense of real progress (not fake, actual durations).
 - Current level expands to show Alice's message and next action.
-- Mobile: Single column, smooth scroll through the path. Completed levels collapse to save space.
+- **Accelerated assessment affordance is subtle, not prominent.** It appears only when a locked level is tapped. The default UX does not show it — it is for learners who actively seek it. This matches Chiron's intent: accelerated assessment is a recovery path for prior-knowledge learners, not an escape hatch.
+- **The locked state is honest.** "This level unlocks after you complete Level 3" is accurate and non-judgmental. No "coming soon" — it simply isn't available yet for this learner.
+- Mobile: Single column, smooth scroll through the path. Completed levels collapse to save space. Tapping a locked level expands the inline affordance in place.
 
 ---
 
@@ -256,18 +331,19 @@ The interface should honor the philosophical journey the human is on — from cu
 │                                      │
 │  CERTIFICATE OF MASTERY             │ ← Formal serif or caps
 │                                      │
-│  This certifies that [Name]         │
+│  This certifies that [display_name] │ ← Uses learner's chosen name
 │  has completed the koad:io          │
 │  sovereignty curriculum and         │
 │  demonstrated mastery.              │
 │                                      │
+│  Learner ID: a9f3c2e1-7b4d-...     │ ← UUID shown here — verifiable
 │  Signed by: Alice                   │
 │  Date: April 3, 2026                │
 │                                      │
-│  Signature (GPG):                   │
-│  -----BEGIN PGP SIGNATURE-----      │
-│  iD8DBQBJHf4xLd5jR5XkN4QRAh93Ak...  │
-│  -----END PGP SIGNATURE-----        │
+│  Signature (Ed25519):               │ ← Alice's ed25519 key, not GPG
+│  -----BEGIN SSH SIGNATURE-----      │
+│  U1NIU0lHAAAAAQAAADMAAAALc3No...    │
+│  -----END SSH SIGNATURE-----        │
 │                                      │
 │  ───────────────────────────────── │
 │                                      │
@@ -275,7 +351,7 @@ The interface should honor the philosophical journey the human is on — from cu
 │                    │ Share cert   │  │ ← Gold button
 │                    └──────────────┘  │
 │                    ┌──────────────┐  │
-│                    │ Verify (GPG) │  │ ← Secondary button
+│                    │ Verify sig   │  │ ← Secondary button (Ed25519)
 │                    └──────────────┘  │
 │                                      │
 │  Next step: Alice introduces Juno   │
@@ -292,7 +368,8 @@ The interface should honor the philosophical journey the human is on — from cu
 **Notes:**
 - Ceremonial, not transactional. Alice speaks as a mentor honoring the achievement.
 - Certificate is formal (all caps, clear signature) but still warm — this is real and verifiable.
-- GPG signature is visible and readable — no hiding the crypto, it's the point.
+- **Learner ID (UUID) appears on the certificate.** This is the stable, verifiable identifier — not the display name alone. Someone who wants to verify this certificate can check the UUID against Alice's learner records. The display name is what makes it personal; the UUID is what makes it trustworthy.
+- **Signature is Alice's Ed25519 key**, not GPG. Alice signs the certificate file using `~/.alice/id/ed25519`. The "Verify (Ed25519)" button shows the raw signature block and links to Alice's public key endpoint.
 - Share and Verify buttons respect that the human will want to prove this to others.
 - Final action (Meet Juno) is warm and forward-looking, not a goodbye.
 - Mobile: Certificate scrolls vertically, signature is readable, buttons are thumb-reachable.
@@ -306,31 +383,51 @@ The interface should honor the philosophical journey the human is on — from cu
 
 ```
 <AliceContainer>
-  <AliceIntro />         // First-time entry
-  <AliceJourney />       // Level progression view
-    ├── <LevelList />    // Completed, current, locked
+  <AliceIntro />              // First-time greeting
+  <AliceNamePrompt />         // Collects display_name, generates UUID, writes identity.md
+  <AliceJourney />            // Level progression view
+    ├── <LevelList />         // Completed, current, locked
+    │     └── <LockedLevel /> // Inline accelerated-assessment affordance on tap
     └── <CurrentLesson />
       ├── <AliceConversation />
       └── <HumanInput />
-  <AliceGraduation />    // Certificate moment
+  <AliceGraduation />         // Certificate moment
 </AliceContainer>
 ```
 
+**State Alice manages (on disk):**
+- `~/.alice/learners/{uuid}/identity.md` — display_name, created_at
+- `~/.alice/learners/{uuid}/curricula/alice-onboarding/level-{N}-complete.md` — one per completed level
+- `~/.alice/learners/{uuid}/curricula/alice-onboarding/certificate.md` — issued at Level 12
+
+**State Vulcan reads (never writes):**
+- All of the above — Vulcan's gating logic reads these files to determine level status
+
 ### Data Structure
 
-Each level needs:
-- `id`: 1-12
+**Learner identity (from `~/.alice/learners/{uuid}/identity.md`):**
+- `learner_id`: UUIDv4 — Alice-generated at first interaction, never shown to learner in normal flow
+- `display_name`: Human-supplied handle or name ("Jordan", "koad", whatever they chose) — used everywhere Alice addresses them
+- `created_at`: ISO-8601 timestamp of first session
+
+**Each level (from curriculum + learner state):**
+- `id`: 0-12 (level 0 is "The First File" — prerequisite-free)
 - `title`: Human-readable level name
 - `description`: One-line descriptor for list view
 - `content`: Alice's conversational content (markdown or rich text)
 - `duration`: Estimated time to complete
+- `status`: `locked | available | in-progress | complete`
+- `completed_at`: ISO-8601 if complete (from completion record on disk)
 - `interactions`: Optional branching questions or checks
 
-The certificate needs:
-- `humanName`: Learner's identity
-- `completedDate`: Timestamp
-- `aliceSignature`: GPG signature (Alice entity signs this)
-- `verificationUrl`: Public GPG endpoint
+**What determines `status`:** Vulcan reads `~/.alice/learners/{uuid}/curricula/alice-onboarding/level-{N}-complete.md`. If the file exists and is well-formed, the level is complete and the next is available. Alice writes these files; Vulcan reads them.
+
+**The certificate (from `~/.alice/learners/{uuid}/curricula/alice-onboarding/certificate.md`):**
+- `display_name`: Learner's chosen name (shown on certificate)
+- `learner_id`: UUID (shown on certificate — this is the verifiable identifier)
+- `completedDate`: Timestamp of Level 12 completion
+- `aliceSignature`: Ed25519 signature from Alice's key at `~/.alice/id/ed25519` (Alice signs this, not Vulcan)
+- `verificationUrl`: Public key endpoint for Alice's ed25519 public key
 
 ### CSS Custom Properties
 
@@ -373,12 +470,14 @@ The certificate needs:
 
 ## Next Steps
 
-1. **Vulcan:** Integrate Alice UI components into the PWA (kingofalldata.com).
-2. **Curriculum Content:** Finalize the 12 level scripts — Alice's actual dialogue.
-3. **Certificate Signing:** Implement GPG signing flow for Alice entity.
-4. **Testing:** Human testing with first cohort through the full 12 levels.
+1. **Vulcan:** Integrate Alice UI components into the PWA (kingofalldata.com). Reference koad/vulcan#36 for the full progression system spec and API endpoints.
+2. **Curriculum Content:** Chiron has authored all 12 levels. Content is complete at `~/.chiron/curricula/alice-onboarding/levels/`.
+3. **Certificate Signing:** Alice signs with Ed25519 (`~/.alice/id/ed25519`). This is Alice's responsibility — Vulcan reads the resulting certificate file, does not produce it.
+4. **Name prompt UX:** Build `<AliceNamePrompt />` as the gate between intro and Level 0. No learner session is established until display_name is provided and UUID is written.
+5. **Testing:** Human testing with first cohort through the full 12 levels.
 
 ---
 
 **Design Direction:** Muse  
-**Date:** 2026-04-03
+**Original date:** 2026-04-03  
+**Updated:** 2026-04-05 — Chiron decisions on learner ID, strict gating, and accelerated assessment incorporated
