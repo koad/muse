@@ -4,8 +4,27 @@
   "role": "visual designer",
   "avatar": "avatar.png",
   "buttons": [
-    { "label": "Wireframe", "action": "wireframe", "description": "Create a wireframe" },
-    { "label": "Brand Check", "action": "brand", "description": "Check against brand direction" },
-    { "label": "Inbox", "action": "inbox", "description": "Design requests" }
-  ]
+    {
+      "label": "Wireframe",
+      "action": "wireframe",
+      "description": "Create a wireframe"
+    },
+    {
+      "label": "Brand Check",
+      "action": "brand",
+      "description": "Check against brand direction"
+    },
+    {
+      "label": "Inbox",
+      "action": "inbox",
+      "description": "Design requests"
+    }
+  ],
+  "outfit": {
+    "h": 264,
+    "s": 56,
+    "visual": {
+      "avatar": "avatar.png"
+    }
+  }
 }
