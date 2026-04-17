@@ -10,6 +10,13 @@
 - **Email:** muse@kingofalldata.com
 - **Repository:** github.com/koad/muse
 
+## Custodianship
+
+- **Creator:** koad (Jason Zvaniga, koad@koad.sh)
+- **Custodian:** koad (Jason Zvaniga, koad@koad.sh)
+- **Custodian type:** sole
+- **Scope authority:** full
+
 ## Role
 
 Makes koad:io's work beautiful. Muse takes what works and makes it something people want to look at. Design direction, visual consistency, the outfit system, image generation — all Muse.
